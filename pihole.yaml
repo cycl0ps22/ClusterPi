@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  namespace: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      containers:
+      - name: pihole
+        image: pihole/pihole:latest
+        ports:
+        - containerPort: 53
+          protocol: UDP
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 67
+          protocol: UDP
+        - containerPort: 80
+          protocol: TCP
+        - containerPort: 443
+          protocol: TCP
+        env:
+        - name: TZ
+          value: "Asia/Kathmandu"
+        - name: WEBPASSWORD
+          value: "pihole123" # Password changed to "pihole"
+        volumeMounts:
+        - name: etc-pihole
+          mountPath: /etc/pihole
+        - name: etc-dnsmasq
+          mountPath: /etc/dnsmasq.d
+      volumes:
+      - name: etc-pihole
+        emptyDir: {}
+      - name: etc-dnsmasq
+        emptyDir: {}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: pihole
+  namespace: pihole
+spec:
+  ports:
+  - port: 8000 # Changed the port to 8000
+    targetPort: 80
+  selector:
+    app: pihole
+  externalIPs:
+  - 192.168.92.100 # External IP set to 192.168.1.101
