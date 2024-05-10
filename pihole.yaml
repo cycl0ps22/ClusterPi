@@ -31,7 +31,7 @@ spec:
         - name: TZ
           value: "Asia/Kathmandu"
         - name: WEBPASSWORD
-          value: "pihole1234" # Password changed to "pihole"
+          value: "pihole" # Password changed to "pihole"
         volumeMounts:
         - name: etc-pihole
           mountPath: /etc/pihole
