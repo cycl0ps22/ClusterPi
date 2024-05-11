@@ -1,23 +1,39 @@
 #!/bin/bash
 
-# Check if the commit contains changes to any YAML file
-changed_yaml_files=$(git diff --name-only HEAD^ HEAD | grep "\.yaml$")
-if [ -n "$changed_yaml_files" ]; then
-    echo "Changes detected in YAML file(s). Deploying to Kubernetes..."
+# GitHub repository URL
+REPO_URL=https://github.com/cycl0ps22/ClusterPi.git
+# Directory to clone the repository
+CLONE_DIR=/tmp/ClusterPi
 
-    # Apply all YAML files
-    for file in $changed_yaml_files; do
-        DEPLOYMENT_NAME=$(basename "$file" | cut -d. -f1)
-        kubectl apply -f "$file"
-        # Check deployment status
-        kubectl rollout status deployment/$DEPLOYMENT_NAME
-        if [ $? -eq 0 ]; then
-            echo "Deployment of $DEPLOYMENT_NAME successful!"
-        else
-            echo "Deployment of $DEPLOYMENT_NAME failed!"
-            exit 1
-        fi
-    done
-else
-    echo "No changes detected in YAML file. Skipping deployment."
-fi
+# Function to deploy changed YAML files
+deploy_changes() {
+    local changed_files=("$@")
+    if [ ${#changed_files[@]} -eq 0 ]; then
+        echo "No changes detected in YAML files."
+    else
+        echo "Deploying changed YAML files:"
+        for file in "${changed_files[@]}"; do
+            echo "- $file"
+            kubectl apply -f "$file"
+        done
+    fi
+}
+
+# Function to detect changes in YAML files
+detect_changes() {
+    local changed_yaml_files=()
+    while IFS= read -r file; do
+        changed_yaml_files+=("$file")
+    done < <(git -C "$CLONE_DIR" diff --name-only HEAD^ HEAD *.yaml)
+    deploy_changes "${changed_yaml_files[@]}"
+}
+
+# Main script execution starts here
+echo "Cloning the GitHub repository..."
+git clone "$REPO_URL" "$CLONE_DIR" || { echo "Error: Unable to clone the repository."; exit 1; }
+
+echo "Checking for changes in YAML files..."
+detect_changes || echo "No changes detected in YAML files."
+
+echo "Removing the cloned repository directory..."
+rm -rf "$CLONE_DIR"
