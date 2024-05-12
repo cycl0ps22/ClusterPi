@@ -55,5 +55,4 @@ spec:
   selector:
     app: pihole
   externalIPs:
-  - 192.168.1.101 # External IP set to 192.168.1.101
-        
+  - 172.16.19.201 # External IP set to 192.168.1.101        
